@@ -1,141 +1,167 @@
-/* TOML Frontmatter Card Styles */
+/* Properties-style TOML frontmatter */
 
-.toml-frontmatter-container {
-  border: 1px solid var(--color-accent);
-  border-radius: 4px;
-  margin: 0 0 1rem 0;
-  background-color: var(--color-base-30);
-  overflow: hidden;
+.toml-properties {
+  margin-bottom: 1em;
+  font-size: var(--font-ui-small);
 }
 
-.toml-header {
+/* Header */
+.toml-properties-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background-color: var(--color-base-40);
+  gap: 4px;
   cursor: pointer;
   user-select: none;
-  border-bottom: 1px solid var(--color-accent);
-  transition: background-color 0.2s;
-}
-
-.toml-header:hover {
-  background-color: var(--color-base-50);
-}
-
-.toml-chevron {
-  font-size: 0.75rem;
-  display: inline-block;
-  width: 16px;
-  color: var(--text-muted);
-}
-
-.toml-title {
+  padding: 4px 0;
+  color: var(--text-normal);
   font-weight: 600;
-  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
 }
 
-.toml-body {
-  padding: 12px;
-  color: var(--text-normal);
-}
-
-.toml-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.toml-table tr {
-  border-bottom: 1px solid var(--color-base-40);
-}
-
-.toml-table tr:last-child {
-  border-bottom: none;
-}
-
-.toml-key {
-  padding: 8px 12px;
-  font-weight: 500;
-  color: var(--text-accent);
-  white-space: nowrap;
-  width: 30%;
-  vertical-align: top;
-  background-color: var(--color-base-25);
-}
-
-.toml-nested-key {
-  padding-left: 24px;
-}
-
-.toml-section-header td {
-  padding: 6px 12px;
-  background-color: var(--color-base-35, var(--color-base-40));
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.toml-section-label {
-  color: var(--text-muted);
-  font-family: var(--font-monospace);
-}
-
-.toml-value {
-  padding: 8px 12px;
-  color: var(--text-normal);
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-
-.toml-error {
-  padding: 12px;
-  background-color: var(--color-base-25);
-  border-left: 3px solid var(--color-red);
-  border-radius: 2px;
-  margin: 0;
-}
-
-.toml-error strong {
-  color: var(--color-red);
-  display: block;
-  margin-bottom: 4px;
-}
-
-.toml-error pre {
-  margin: 0;
-  background-color: var(--color-base-10);
-  padding: 8px;
-  border-radius: 2px;
-  font-size: 0.85rem;
-  overflow-x: auto;
-}
-
-.toml-empty {
-  padding: 12px;
-  color: var(--text-muted);
-  font-style: italic;
-  text-align: center;
-}
-
-.toml-raw-section {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-base-40);
-}
-
-.toml-raw-section strong {
-  display: block;
-  margin-bottom: 8px;
+.toml-properties-header:hover {
   color: var(--text-accent);
 }
 
-.toml-raw {
-  background-color: var(--color-base-10);
-  padding: 10px;
+.toml-properties-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+  color: var(--text-faint);
+  transition: transform 0.15s ease;
+}
+
+.is-collapsed .toml-properties-chevron {
+  transform: rotate(-90deg);
+}
+
+.toml-properties-title {
+  font-weight: var(--font-semibold, 600);
+}
+
+/* Body */
+.toml-properties-body {
+  padding: 2px 0 4px 0;
+}
+
+/* Row layout */
+.toml-properties-row {
+  display: grid;
+  grid-template-columns: 24px minmax(80px, 140px) 1fr;
+  align-items: center;
+  min-height: 30px;
+  padding: 2px 0;
+  gap: 4px;
   border-radius: 4px;
-  overflow-x: auto;
-  font-size: 0.85rem;
-  margin: 0;
+}
+
+.toml-properties-row:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+/* Icon */
+.toml-properties-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  width: 24px;
+  height: 24px;
+}
+
+.toml-properties-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Key */
+.toml-properties-key {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Value */
+.toml-properties-value {
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tags as pills */
+.toml-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.toml-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background-color: var(--tag-background);
+  color: var(--tag-color);
+  font-size: var(--font-ui-smaller);
   line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Date value */
+.toml-date-value {
+  color: var(--text-normal);
+}
+
+/* Checkbox for booleans */
+.toml-checkbox input[type="checkbox"] {
+  margin: 0;
+  pointer-events: none;
+}
+
+/* Section (nested objects) */
+.toml-properties-section {
+  margin-top: 2px;
+}
+
+.toml-properties-section-header {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  min-height: 30px;
+  padding: 2px 0;
+  gap: 4px;
+}
+
+.toml-properties-section-name {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold, 600);
+}
+
+.toml-properties-section .toml-properties-row {
+  grid-template-columns: 24px minmax(80px, 140px) 1fr;
+  padding-left: 4px;
+}
+
+/* Error state */
+.toml-properties-error {
+  padding: 6px 8px;
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+  background-color: var(--background-modifier-error);
+  border-radius: 4px;
+}
+
+/* Empty state */
+.toml-properties-empty {
+  padding: 6px 0;
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+  font-style: italic;
 }
