@@ -2,6 +2,29 @@
 
 An Obsidian plugin that renders **TOML frontmatter** (`+++...+++`) as a native-style Properties panel in both Reading view and Live Preview.
 
+![Properties panel in Reading view](assets/screenshots/screenshot-properties.webp)
+
+```toml
++++
+title = "TOML Frontmatter Example"
+author = "Obsidian User"
+created = 2024-02-27
+updated = 2024-02-27
+tags = ["toml", "example", "obsidian"]
+status = "active"
+priority = 5
+
+[metadata]
+category = "documentation"
+difficulty = "beginner"
+estimated-read-time = "5 min"
+
+[author-info]
+name = "Obsidian User"
+email = "user@example.com"
++++
+```
+
 ## Features
 
 - **Properties UI** — renders TOML data like Obsidian's native Properties panel with type-aware icons
@@ -12,26 +35,6 @@ An Obsidian plugin that renders **TOML frontmatter** (`+++...+++`) as a native-s
 - **YAML-safe** — ignores files with standard YAML frontmatter (`---...---`)
 - **Error display** — malformed TOML shows parse errors inline without breaking the note
 - **Configurable** — custom delimiter, render mode, collapse state, per-view toggles
-
-## Usage
-
-Add TOML frontmatter to the top of any note:
-
-```markdown
-+++
-title = "My Note"
-author = "Jane"
-tags = ["obsidian", "toml"]
-draft = false
-
-[metadata]
-category = "docs"
-+++
-
-# Your note content here
-```
-
-The plugin automatically detects and renders it as a Properties panel.
 
 ## Installation
 
