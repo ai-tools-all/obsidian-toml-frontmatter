@@ -10,17 +10,17 @@ export function parseTomlFrontmatter(
 
   if (!content.trim()) return empty;
 
-  const normalized = content.replace(/\r\n/g, '\n');
+  const normalized = content.replace(/\r\n/g, '\n').replace(/^\uFEFF/, '');
   const lines = normalized.split('\n');
 
   const firstNonEmpty = lines.findIndex((line) => line.trim());
-  if (firstNonEmpty === -1 || !lines[firstNonEmpty].trim().startsWith(delimiter)) {
+  if (firstNonEmpty === -1 || lines[firstNonEmpty].trim() !== delimiter) {
     return empty;
   }
 
   let closingIndex = -1;
   for (let i = firstNonEmpty + 1; i < lines.length; i++) {
-    if (lines[i].trim().startsWith(delimiter)) {
+    if (lines[i].trim() === delimiter) {
       closingIndex = i;
       break;
     }

@@ -11,7 +11,7 @@ export default defineConfig({
     },
     outDir: 'dist',
     rollupOptions: {
-      external: ['obsidian', 'electron'],
+      external: ['obsidian', 'electron', '@codemirror/state', '@codemirror/view', '@codemirror/language'],
       output: {
         globals: {
           obsidian: 'obsidian',

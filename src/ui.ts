@@ -21,6 +21,116 @@ function detectType(value: any): string {
   return 'text';
 }
 
+function formatValue(value: any): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (typeof value === 'number') return String(value);
+  if (value instanceof Date) return value.toISOString().split('T')[0];
+  if (Array.isArray(value)) return value.map(v => formatValue(v)).join(', ');
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function renderRow(container: HTMLElement, key: string, value: any): void {
+  const type = detectType(value);
+  const row = container.createDiv({ cls: 'toml-properties-row' });
+
+  const iconEl = row.createSpan({ cls: 'toml-properties-icon' });
+  iconEl.innerHTML = ICONS[type] || ICONS.text;
+
+  row.createSpan({ cls: 'toml-properties-key', text: key });
+
+  const valueEl = row.createSpan({ cls: 'toml-properties-value' });
+
+  if (type === 'tags' && Array.isArray(value)) {
+    const tagsContainer = valueEl.createSpan({ cls: 'toml-tags' });
+    for (const tag of value) {
+      tagsContainer.createSpan({ cls: 'toml-tag', text: String(tag) });
+    }
+  } else if (type === 'boolean') {
+    const cb = valueEl.createEl('input', { type: 'checkbox', attr: { disabled: '' } });
+    if (value) cb.setAttribute('checked', '');
+  } else if (type === 'date') {
+    const dateStr = value instanceof Date ? value.toISOString().split('T')[0] : String(value);
+    valueEl.createSpan({ cls: 'toml-date-value', text: dateStr });
+  } else {
+    valueEl.createSpan({ text: formatValue(value) });
+  }
+}
+
+function renderProperties(container: HTMLElement, data: Record<string, any>): void {
+  const flat: [string, any][] = [];
+  const nested: [string, Record<string, any>][] = [];
+
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      nested.push([key, value]);
+    } else {
+      flat.push([key, value]);
+    }
+  }
+
+  for (const [key, value] of flat) {
+    renderRow(container, key, value);
+  }
+
+  for (const [key, obj] of nested) {
+    const sectionEl = container.createDiv({ cls: 'toml-properties-section' });
+    const sectionHeader = sectionEl.createDiv({ cls: 'toml-properties-section-header' });
+    const iconEl = sectionHeader.createSpan({ cls: 'toml-properties-icon' });
+    iconEl.innerHTML = ICONS.object;
+    sectionHeader.createSpan({ cls: 'toml-properties-section-name', text: key });
+
+    for (const [subKey, subValue] of Object.entries(obj)) {
+      if (subValue !== null && typeof subValue === 'object' && !Array.isArray(subValue) && !(subValue instanceof Date)) {
+        for (const [deepKey, deepValue] of Object.entries(subValue as Record<string, any>)) {
+          renderRow(sectionEl, deepKey, deepValue);
+        }
+      } else {
+        renderRow(sectionEl, subKey, subValue);
+      }
+    }
+  }
+}
+
+export function buildPropertiesDOM(container: HTMLElement, parsed: ParsedToml, settings: PluginSettings): void {
+  container.addClass('toml-properties');
+
+  const header = container.createDiv({ cls: 'toml-properties-header' });
+  const chevron = header.createSpan({
+    cls: 'toml-properties-chevron',
+    text: settings.defaultCollapsed ? '›' : '‹',
+  });
+  header.createSpan({ cls: 'toml-properties-title', text: 'Properties' });
+
+  const body = container.createDiv({ cls: 'toml-properties-body' });
+
+  if (settings.defaultCollapsed) {
+    body.style.display = 'none';
+    container.addClass('is-collapsed');
+  }
+
+  header.addEventListener('click', () => {
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? '' : 'none';
+    chevron.textContent = isHidden ? '‹' : '›';
+    container.toggleClass('is-collapsed', !isHidden);
+  });
+
+  if (parsed.error) {
+    body.createDiv({ cls: 'toml-properties-error' }).createSpan({ text: parsed.error });
+    return;
+  }
+
+  if (!parsed.data || Object.keys(parsed.data).length === 0) {
+    body.createDiv({ cls: 'toml-properties-empty', text: 'No properties' });
+    return;
+  }
+
+  renderProperties(body, parsed.data);
+}
+
 export class TomlCard extends MarkdownRenderChild {
   private parsed: ParsedToml;
   private settings: PluginSettings;
@@ -32,119 +142,7 @@ export class TomlCard extends MarkdownRenderChild {
   }
 
   onload(): void {
-    this.render();
-  }
-
-  private render(): void {
-    const container = this.containerEl;
-    container.empty();
-    container.addClass('toml-properties');
-
-    const header = container.createEl('div', { cls: 'toml-properties-header' });
-    const chevron = header.createEl('span', {
-      cls: 'toml-properties-chevron',
-      text: this.settings.defaultCollapsed ? '›' : '‹',
-    });
-    header.createEl('span', { cls: 'toml-properties-title', text: 'Properties' });
-
-    const body = container.createEl('div', { cls: 'toml-properties-body' });
-
-    if (this.settings.defaultCollapsed) {
-      body.style.display = 'none';
-      container.addClass('is-collapsed');
-    }
-
-    header.addEventListener('click', () => {
-      const isHidden = body.style.display === 'none';
-      body.style.display = isHidden ? '' : 'none';
-      chevron.textContent = isHidden ? '‹' : '›';
-      container.toggleClass('is-collapsed', !isHidden);
-    });
-
-    if (this.parsed.error) {
-      const errorEl = body.createEl('div', { cls: 'toml-properties-error' });
-      errorEl.createEl('span', { text: this.parsed.error });
-      return;
-    }
-
-    if (!this.parsed.data || Object.keys(this.parsed.data).length === 0) {
-      body.createEl('div', { cls: 'toml-properties-empty', text: 'No properties' });
-      return;
-    }
-
-    this.renderProperties(body, this.parsed.data);
-  }
-
-  private renderProperties(container: HTMLElement, data: Record<string, any>, prefix?: string): void {
-    const flat: [string, any][] = [];
-    const nested: [string, Record<string, any>][] = [];
-
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
-        nested.push([key, value]);
-      } else {
-        flat.push([key, value]);
-      }
-    }
-
-    for (const [key, value] of flat) {
-      this.renderRow(container, key, value);
-    }
-
-    for (const [key, obj] of nested) {
-      const sectionEl = container.createEl('div', { cls: 'toml-properties-section' });
-      const sectionHeader = sectionEl.createEl('div', { cls: 'toml-properties-section-header' });
-      const iconEl = sectionHeader.createEl('span', { cls: 'toml-properties-icon' });
-      iconEl.innerHTML = ICONS.object;
-      sectionHeader.createEl('span', { cls: 'toml-properties-section-name', text: key });
-
-      for (const [subKey, subValue] of Object.entries(obj)) {
-        if (subValue !== null && typeof subValue === 'object' && !Array.isArray(subValue) && !(subValue instanceof Date)) {
-          for (const [deepKey, deepValue] of Object.entries(subValue as Record<string, any>)) {
-            this.renderRow(sectionEl, deepKey, deepValue);
-          }
-        } else {
-          this.renderRow(sectionEl, subKey, subValue);
-        }
-      }
-    }
-  }
-
-  private renderRow(container: HTMLElement, key: string, value: any): void {
-    const type = detectType(value);
-    const row = container.createEl('div', { cls: 'toml-properties-row' });
-
-    const iconEl = row.createEl('span', { cls: 'toml-properties-icon' });
-    iconEl.innerHTML = ICONS[type] || ICONS.text;
-
-    row.createEl('span', { cls: 'toml-properties-key', text: key });
-
-    const valueEl = row.createEl('span', { cls: 'toml-properties-value' });
-
-    if (type === 'tags' && Array.isArray(value)) {
-      const tagsContainer = valueEl.createEl('span', { cls: 'toml-tags' });
-      for (const tag of value) {
-        tagsContainer.createEl('span', { cls: 'toml-tag', text: String(tag) });
-      }
-    } else if (type === 'boolean') {
-      const checkbox = valueEl.createEl('span', { cls: 'toml-checkbox' });
-      checkbox.createEl('input', { type: 'checkbox', attr: { checked: value ? '' : undefined, disabled: '' } });
-    } else if (type === 'date') {
-      const dateStr = value instanceof Date ? value.toISOString().split('T')[0] : String(value);
-      valueEl.createEl('span', { cls: 'toml-date-value', text: dateStr });
-    } else {
-      valueEl.createEl('span', { text: this.formatValue(value) });
-    }
-  }
-
-  private formatValue(value: any): string {
-    if (value === null || value === undefined) return '';
-    if (typeof value === 'string') return value;
-    if (typeof value === 'boolean') return value ? 'true' : 'false';
-    if (typeof value === 'number') return String(value);
-    if (value instanceof Date) return value.toISOString().split('T')[0];
-    if (Array.isArray(value)) return value.map(v => this.formatValue(v)).join(', ');
-    if (typeof value === 'object') return JSON.stringify(value);
-    return String(value);
+    this.containerEl.empty();
+    buildPropertiesDOM(this.containerEl, this.parsed, this.settings);
   }
 }

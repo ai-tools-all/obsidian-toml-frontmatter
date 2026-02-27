@@ -3,6 +3,7 @@ import { parseTomlFrontmatter } from './tomlFrontmatter';
 import { TomlCard } from './ui';
 import { PluginSettingsTab } from './settings';
 import { DEFAULT_SETTINGS, ParsedToml, PluginSettings } from './types';
+import { tomlEditorField, setEditorSettings } from './editorExtension';
 
 export default class MdProcessorTomlPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -15,6 +16,9 @@ export default class MdProcessorTomlPlugin extends Plugin {
     await this.loadSettings();
 
     this.addSettingTab(new PluginSettingsTab(this.app, this));
+
+    setEditorSettings(this.settings);
+    this.registerEditorExtension([tomlEditorField]);
 
     this.registerMarkdownPostProcessor(async (el, ctx) => {
       if (!this.settings.enabledInReadingView) return;
@@ -130,5 +134,6 @@ export default class MdProcessorTomlPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+    setEditorSettings(this.settings);
   }
 }

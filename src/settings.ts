@@ -59,12 +59,24 @@ export class PluginSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Enabled in Reading View')
-      .setDesc('Show TOML card in Reading view')
+      .setDesc('Show TOML properties in Reading view')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enabledInReadingView)
           .onChange(async (value) => {
             this.plugin.settings.enabledInReadingView = value;
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName('Enabled in Live Preview')
+      .setDesc('Show TOML properties in Live Preview / Edit mode')
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.enabledInLivePreview)
+          .onChange(async (value) => {
+            this.plugin.settings.enabledInLivePreview = value;
             await this.plugin.saveSettings();
           }),
       );

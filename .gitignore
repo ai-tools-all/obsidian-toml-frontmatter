@@ -1,0 +1,16 @@
+node_modules/
+dist/
+docs/
+*.map
+.DS_Store
+.env
+.env.local
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

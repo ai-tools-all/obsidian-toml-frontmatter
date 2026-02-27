@@ -11,6 +11,7 @@ export interface PluginSettings {
   defaultCollapsed: boolean;
   renderMode: 'table' | 'raw' | 'both';
   enabledInReadingView: boolean;
+  enabledInLivePreview: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -18,4 +19,5 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   defaultCollapsed: false,
   renderMode: 'table',
   enabledInReadingView: true,
+  enabledInLivePreview: true,
 };
