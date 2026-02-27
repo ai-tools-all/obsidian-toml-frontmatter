@@ -1,0 +1,141 @@
+/* TOML Frontmatter Card Styles */
+
+.toml-frontmatter-container {
+  border: 1px solid var(--color-accent);
+  border-radius: 4px;
+  margin: 0 0 1rem 0;
+  background-color: var(--color-base-30);
+  overflow: hidden;
+}
+
+.toml-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: var(--color-base-40);
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--color-accent);
+  transition: background-color 0.2s;
+}
+
+.toml-header:hover {
+  background-color: var(--color-base-50);
+}
+
+.toml-chevron {
+  font-size: 0.75rem;
+  display: inline-block;
+  width: 16px;
+  color: var(--text-muted);
+}
+
+.toml-title {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.toml-body {
+  padding: 12px;
+  color: var(--text-normal);
+}
+
+.toml-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.toml-table tr {
+  border-bottom: 1px solid var(--color-base-40);
+}
+
+.toml-table tr:last-child {
+  border-bottom: none;
+}
+
+.toml-key {
+  padding: 8px 12px;
+  font-weight: 500;
+  color: var(--text-accent);
+  white-space: nowrap;
+  width: 30%;
+  vertical-align: top;
+  background-color: var(--color-base-25);
+}
+
+.toml-nested-key {
+  padding-left: 24px;
+}
+
+.toml-section-header td {
+  padding: 6px 12px;
+  background-color: var(--color-base-35, var(--color-base-40));
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.toml-section-label {
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+}
+
+.toml-value {
+  padding: 8px 12px;
+  color: var(--text-normal);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.toml-error {
+  padding: 12px;
+  background-color: var(--color-base-25);
+  border-left: 3px solid var(--color-red);
+  border-radius: 2px;
+  margin: 0;
+}
+
+.toml-error strong {
+  color: var(--color-red);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.toml-error pre {
+  margin: 0;
+  background-color: var(--color-base-10);
+  padding: 8px;
+  border-radius: 2px;
+  font-size: 0.85rem;
+  overflow-x: auto;
+}
+
+.toml-empty {
+  padding: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+.toml-raw-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-base-40);
+}
+
+.toml-raw-section strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-accent);
+}
+
+.toml-raw {
+  background-color: var(--color-base-10);
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.4;
+}

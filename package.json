@@ -1,0 +1,30 @@
+{
+  "name": "md-processor-toml",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Obsidian plugin to detect and render TOML frontmatter (+++...+++) as a collapsible card in Reading view",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "install-plugin": "vite build && ./install.sh ~/Downloads/experiments/learnings"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "toml",
+    "frontmatter"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "obsidian": "latest",
+    "tslib": "2.4.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5"
+  }
+}
