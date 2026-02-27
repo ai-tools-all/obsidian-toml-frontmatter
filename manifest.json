@@ -5,7 +5,7 @@
   "minAppVersion": "1.0.0",
   "description": "Renders TOML frontmatter (+++...+++) as a native-style Properties panel in both Reading and Live Preview modes",
   "author": "Abhishek Tripathi",
-  "authorUrl": "https://github.com/abhishektripathi",
+  "authorUrl": "https://github.com/TwistingTwists",
   "fundingUrl": "",
   "isDesktopOnly": false
 }
