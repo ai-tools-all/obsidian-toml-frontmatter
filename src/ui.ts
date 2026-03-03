@@ -1,5 +1,5 @@
 import { MarkdownRenderChild } from 'obsidian';
-import { ParsedToml, PluginSettings, TomlValue, TomlTable, isTomlTable } from './types';
+import { ParsedToml, PluginSettings, TomlValue, TomlTable, TomlArray, OnPropertyChange, isTomlTable, isTomlArray } from './types';
 
 const ICONS: Record<string, string> = {
   text: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18H3"/></svg>`,
@@ -32,9 +32,27 @@ function formatValue(value: TomlValue): string {
   return String(value);
 }
 
-function renderRow(container: HTMLElement, key: string, value: TomlValue): void {
+function inferType(raw: string): TomlValue {
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  if (/^-?\d+$/.test(raw)) return parseInt(raw, 10);
+  if (/^-?\d+\.\d+$/.test(raw)) return parseFloat(raw);
+  return raw;
+}
+
+function renderRow(
+  container: HTMLElement,
+  key: string,
+  value: TomlValue,
+  onUpdate?: OnPropertyChange,
+  keyPath?: string[],
+): void {
   const type = detectType(value);
   const row = container.createDiv({ cls: 'toml-properties-row' });
+
+  if (onUpdate && keyPath) {
+    row.addClass('is-editable');
+  }
 
   const iconEl = row.createSpan({ cls: 'toml-properties-icon' });
   iconEl.innerHTML = ICONS[type] || ICONS.text;
@@ -43,23 +61,92 @@ function renderRow(container: HTMLElement, key: string, value: TomlValue): void 
 
   const valueEl = row.createSpan({ cls: 'toml-properties-value' });
 
-  if (type === 'tags' && Array.isArray(value)) {
+  if (type === 'tags' && isTomlArray(value)) {
     const tagsContainer = valueEl.createSpan({ cls: 'toml-tags' });
-    for (const tag of value) {
-      tagsContainer.createSpan({ cls: 'toml-tag', text: String(tag) });
+    const items = [...value];
+    for (const tag of items) {
+      const pill = tagsContainer.createSpan({ cls: 'toml-tag', text: String(tag) });
+      if (onUpdate && keyPath) {
+        const removeBtn = pill.createSpan({ cls: 'toml-tag-remove', text: '×' });
+        removeBtn.addEventListener('click', (e: MouseEvent) => {
+          e.stopPropagation();
+          const newTags = items.filter((t) => t !== tag) as TomlArray;
+          onUpdate(keyPath, newTags, 'update');
+        });
+      }
+    }
+    if (onUpdate && keyPath) {
+      const addBtn = tagsContainer.createSpan({ cls: 'toml-tag toml-tag-add', text: '+' });
+      addBtn.addEventListener('click', () => {
+        const input = tagsContainer.createEl('input', {
+          cls: 'toml-input toml-tag-input',
+          attr: { placeholder: 'new tag' },
+        }) as HTMLInputElement;
+        input.focus();
+        const commitTag = (): void => {
+          const v = input.value.trim();
+          if (v) { onUpdate(keyPath, [...items, v] as TomlArray, 'update'); }
+          else { input.remove(); }
+        };
+        input.addEventListener('blur', commitTag);
+        input.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (e.key === 'Enter') { e.preventDefault(); commitTag(); }
+        });
+      });
     }
   } else if (type === 'boolean') {
-    const cb = valueEl.createEl('input', { type: 'checkbox', attr: { disabled: '' } });
-    if (value) cb.setAttribute('checked', '');
+    const cb = valueEl.createEl('input', { type: 'checkbox' }) as HTMLInputElement;
+    if (!onUpdate || !keyPath) cb.setAttribute('disabled', '');
+    if (value === true) cb.setAttribute('checked', '');
+    if (onUpdate && keyPath) {
+      cb.addEventListener('change', () => { onUpdate(keyPath, cb.checked, 'update'); });
+    }
   } else if (type === 'date') {
-    const dateStr = value instanceof Date ? value.toISOString().split('T')[0] : String(value);
-    valueEl.createSpan({ cls: 'toml-date-value', text: dateStr });
+    if (onUpdate && keyPath) {
+      const dateStr = value instanceof Date ? value.toISOString().split('T')[0] : String(value);
+      const dateInput = valueEl.createEl('input', {
+        cls: 'toml-input toml-input-date',
+        attr: { type: 'date', value: dateStr },
+      }) as HTMLInputElement;
+      dateInput.addEventListener('change', () => { onUpdate(keyPath, dateInput.value, 'update'); });
+    } else {
+      const dateStr = value instanceof Date ? value.toISOString().split('T')[0] : String(value);
+      valueEl.createSpan({ cls: 'toml-date-value', text: dateStr });
+    }
   } else {
-    valueEl.createSpan({ text: formatValue(value) });
+    if (onUpdate && keyPath) {
+      const input = valueEl.createEl('input', {
+        cls: 'toml-input',
+        attr: { type: type === 'number' ? 'number' : 'text', value: formatValue(value) },
+      }) as HTMLInputElement;
+      const commit = (): void => {
+        const raw = input.value;
+        const newVal: TomlValue = type === 'number' ? Number(raw) : raw;
+        if (newVal !== value) onUpdate(keyPath, newVal, 'update');
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      });
+    } else {
+      valueEl.createSpan({ text: formatValue(value) });
+    }
+  }
+
+  if (onUpdate && keyPath) {
+    const deleteBtn = row.createSpan({ cls: 'toml-row-delete', text: '×' });
+    deleteBtn.addEventListener('click', () => {
+      onUpdate(keyPath, undefined, 'delete');
+    });
   }
 }
 
-function renderProperties(container: HTMLElement, data: TomlTable): void {
+function renderProperties(
+  container: HTMLElement,
+  data: TomlTable,
+  onUpdate?: OnPropertyChange,
+  parentKeyPath: string[] = [],
+): void {
   const flat: [string, TomlValue][] = [];
   const nested: [string, TomlTable][] = [];
 
@@ -72,10 +159,11 @@ function renderProperties(container: HTMLElement, data: TomlTable): void {
   }
 
   for (const [key, value] of flat) {
-    renderRow(container, key, value);
+    renderRow(container, key, value, onUpdate, [...parentKeyPath, key]);
   }
 
   for (const [key, obj] of nested) {
+    const sectionKeyPath = [...parentKeyPath, key];
     const sectionEl = container.createDiv({ cls: 'toml-properties-section' });
     const sectionHeader = sectionEl.createDiv({ cls: 'toml-properties-section-header' });
     const iconEl = sectionHeader.createSpan({ cls: 'toml-properties-icon' });
@@ -85,16 +173,21 @@ function renderProperties(container: HTMLElement, data: TomlTable): void {
     for (const [subKey, subValue] of Object.entries(obj)) {
       if (isTomlTable(subValue)) {
         for (const [deepKey, deepValue] of Object.entries(subValue)) {
-          renderRow(sectionEl, deepKey, deepValue);
+          renderRow(sectionEl, deepKey, deepValue, onUpdate, [...sectionKeyPath, subKey, deepKey]);
         }
       } else {
-        renderRow(sectionEl, subKey, subValue);
+        renderRow(sectionEl, subKey, subValue, onUpdate, [...sectionKeyPath, subKey]);
       }
     }
   }
 }
 
-export function buildPropertiesDOM(container: HTMLElement, parsed: ParsedToml, settings: PluginSettings): void {
+export function buildPropertiesDOM(
+  container: HTMLElement,
+  parsed: ParsedToml,
+  settings: PluginSettings,
+  onUpdate?: OnPropertyChange,
+): void {
   container.addClass('toml-properties');
 
   const header = container.createDiv({ cls: 'toml-properties-header' });
@@ -105,6 +198,30 @@ export function buildPropertiesDOM(container: HTMLElement, parsed: ParsedToml, s
   header.createSpan({ cls: 'toml-properties-title', text: 'Properties' });
 
   const body = container.createDiv({ cls: 'toml-properties-body' });
+
+  if (onUpdate) {
+    const addBtn = header.createSpan({ cls: 'toml-add-property', text: '+' });
+    addBtn.addEventListener('click', () => {
+      const row = body.createDiv({ cls: 'toml-add-property-row' });
+      const keyInput = row.createEl('input', {
+        cls: 'toml-input', attr: { placeholder: 'key' },
+      }) as HTMLInputElement;
+      const valInput = row.createEl('input', {
+        cls: 'toml-input', attr: { placeholder: 'value' },
+      }) as HTMLInputElement;
+      const confirmBtn = row.createEl('button', { cls: 'toml-add-confirm', text: 'Add' });
+      keyInput.focus();
+      const doAdd = (): void => {
+        const key = keyInput.value.trim();
+        const val = valInput.value.trim();
+        if (key) { onUpdate([key], inferType(val), 'add'); }
+      };
+      confirmBtn.addEventListener('click', doAdd);
+      valInput.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter') { e.preventDefault(); doAdd(); }
+      });
+    });
+  }
 
   if (settings.defaultCollapsed) {
     body.style.display = 'none';
@@ -128,21 +245,21 @@ export function buildPropertiesDOM(container: HTMLElement, parsed: ParsedToml, s
     return;
   }
 
-  renderProperties(body, parsed.data);
+  renderProperties(body, parsed.data, onUpdate);
 }
 
 export class TomlCard extends MarkdownRenderChild {
-  private parsed: ParsedToml;
-  private settings: PluginSettings;
-
-  constructor(container: HTMLElement, parsed: ParsedToml, settings: PluginSettings) {
+  constructor(
+    container: HTMLElement,
+    private parsed: ParsedToml,
+    private settings: PluginSettings,
+    private onUpdate?: OnPropertyChange,
+  ) {
     super(container);
-    this.parsed = parsed;
-    this.settings = settings;
   }
 
   onload(): void {
     this.containerEl.empty();
-    buildPropertiesDOM(this.containerEl, this.parsed, this.settings);
+    buildPropertiesDOM(this.containerEl, this.parsed, this.settings, this.onUpdate);
   }
 }

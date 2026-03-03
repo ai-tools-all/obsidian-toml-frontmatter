@@ -165,3 +165,122 @@
   font-size: var(--font-ui-small);
   font-style: italic;
 }
+
+/* Editable inputs */
+.toml-input {
+  background: var(--background-modifier-form-field);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.toml-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.toml-input-date {
+  width: auto;
+}
+
+/* Delete button per row */
+.toml-row-delete {
+  display: none;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 14px;
+  text-align: center;
+  line-height: 24px;
+  border-radius: 4px;
+}
+
+.toml-properties-row:hover .toml-row-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toml-row-delete:hover {
+  color: var(--text-error);
+  background-color: var(--background-modifier-error);
+}
+
+/* Editable row grid (extra column for delete) */
+.toml-properties-row.is-editable {
+  grid-template-columns: 24px minmax(80px, 140px) 1fr 20px;
+}
+
+/* Tag remove button */
+.toml-tag-remove {
+  cursor: pointer;
+  margin-left: 4px;
+  font-weight: 600;
+  opacity: 0.5;
+}
+
+.toml-tag-remove:hover {
+  opacity: 1;
+  color: var(--text-error);
+}
+
+/* Add tag button */
+.toml-tag-add {
+  cursor: pointer;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.toml-tag-add:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.toml-tag-input {
+  width: 80px;
+  padding: 2px 6px;
+  font-size: var(--font-ui-smaller);
+}
+
+/* Add property button */
+.toml-add-property {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  color: var(--text-faint);
+  font-size: 16px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.toml-add-property:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* Add property row */
+.toml-add-property-row {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0 4px 24px;
+  align-items: center;
+}
+
+.toml-add-confirm {
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-ui-small);
+}
