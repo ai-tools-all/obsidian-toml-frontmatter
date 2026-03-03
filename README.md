@@ -38,20 +38,27 @@ email = "user@example.com"
 - **Error display** — malformed TOML shows parse errors inline without breaking the note
 - **Configurable** — custom delimiter, render mode, collapse state, per-view toggles
 
-## Installation
+## How to Install
+
+### Via BRAT (recommended while awaiting community listing)
+
+1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) from Community plugins
+2. Open BRAT settings → **Add Beta Plugin**
+3. Enter `ai-tools-all/obsidian-toml-frontmatter`
+4. Enable the plugin in Settings > Community plugins
+
+### Manual
+
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/ai-tools-all/obsidian-toml-frontmatter/releases/latest)
+2. Create `<vault>/.obsidian/plugins/md-processor-toml/`
+3. Copy the three files into that directory
+4. Enable the plugin in Settings > Community plugins
 
 ### From Community Plugins (coming soon)
 
 1. Open Obsidian Settings > Community plugins
 2. Search for "TOML Frontmatter Processor"
 3. Install and enable
-
-### Manual
-
-1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
-2. Create `<vault>/.obsidian/plugins/md-processor-toml/`
-3. Copy the three files into that directory
-4. Enable the plugin in Settings > Community plugins
 
 ## Settings
 
