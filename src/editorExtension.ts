@@ -1,4 +1,4 @@
-import { StateField, Transaction, RangeSet } from '@codemirror/state';
+import { EditorState, StateField, Transaction, RangeSet } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { App, Notice, editorLivePreviewField } from 'obsidian';
 import { parseTomlFrontmatter } from './tomlFrontmatter';
@@ -74,7 +74,7 @@ class TomlWidget extends WidgetType {
   }
 }
 
-function buildDecorations(state: any): DecorationSet {
+function buildDecorations(state: EditorState): DecorationSet {
   if (!pluginSettings?.enabledInLivePreview) return Decoration.none;
 
   const isLivePreview = state.field(editorLivePreviewField, false);
