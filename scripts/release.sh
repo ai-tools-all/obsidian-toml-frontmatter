@@ -21,6 +21,9 @@ for tool in git jq gh git-cliff npm; do
   command -v "$tool" &>/dev/null || die "'$tool' is not installed or not in PATH"
 done
 
+# ── Check cliff.toml exists ───────────────────────────────────────────────────
+[[ -f "cliff.toml" ]] || die "cliff.toml not found — run: git cliff --init"
+
 # ── 1. Pre-flight: clean working tree ─────────────────────────────────────────
 info "Checking working tree..."
 if [[ -n "$(git status --porcelain)" ]]; then
@@ -64,7 +67,7 @@ git push origin main --tags
 
 # ── 7. Create GitHub release ──────────────────────────────────────────────────
 info "Creating GitHub release..."
-gh release create "$VERSION" main.js manifest.json styles.css \
+gh release create "$VERSION" dist/main.js manifest.json styles.css \
   --title "v${VERSION}" \
   --notes-file CHANGELOG.md
 
