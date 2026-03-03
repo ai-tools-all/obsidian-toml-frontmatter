@@ -80,5 +80,22 @@ export class PluginSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           }),
       );
+
+    containerEl.createEl('h2', { text: 'Bases Integration' });
+
+    new Setting(containerEl)
+      .setName('Enable Bases integration')
+      .setDesc(
+        'Expose TOML frontmatter properties to Obsidian Bases and other metadata consumers. ' +
+        'TOML properties merge with YAML frontmatter (TOML wins on conflicts). Requires restart to take effect.',
+      )
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.enableBasesIntegration)
+          .onChange(async (value) => {
+            this.plugin.settings.enableBasesIntegration = value;
+            await this.plugin.saveSettings();
+          }),
+      );
   }
 }

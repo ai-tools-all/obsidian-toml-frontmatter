@@ -4,11 +4,13 @@ import { TomlCard } from './ui';
 import { PluginSettingsTab } from './settings';
 import { DEFAULT_SETTINGS, ParsedToml, PluginSettings } from './types';
 import { tomlEditorField, setEditorSettings } from './editorExtension';
+import { MetadataPatch } from './metadataPatch';
 
 export default class MdProcessorTomlPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
   private cache: Map<string, ParsedToml> = new Map();
   private debounceTimer: NodeJS.Timeout | null = null;
+  private metadataPatch: MetadataPatch | null = null;
 
   async onload(): Promise<void> {
     console.log('Loading md-processor-toml plugin');
@@ -72,6 +74,9 @@ export default class MdProcessorTomlPlugin extends Plugin {
           this.debounceTimer = setTimeout(async () => {
             await this.updateCache(file.path);
             this.rerenderActiveView();
+            if (this.metadataPatch && file instanceof TFile) {
+              this.metadataPatch.notifyChanged(file);
+            }
           }, 300);
         }
       }),
@@ -96,11 +101,38 @@ export default class MdProcessorTomlPlugin extends Plugin {
       if (activeFile) {
         await this.updateCache(activeFile.path);
       }
+
+      if (this.settings.enableBasesIntegration) {
+        this.metadataPatch = new MetadataPatch(this.app, this.cache, this.settings.delimiter);
+        await this.metadataPatch.scanVault();
+        this.metadataPatch.install();
+      }
     });
+
+    this.registerEvent(
+      this.app.vault.on('create', async (file) => {
+        if (file instanceof TFile && file.extension === 'md') {
+          await this.updateCache(file.path);
+          if (this.metadataPatch) {
+            this.metadataPatch.notifyChanged(file);
+          }
+        }
+      }),
+    );
+
+    this.registerEvent(
+      this.app.vault.on('delete', (file) => {
+        this.cache.delete(file.path);
+      }),
+    );
   }
 
   onunload(): void {
     console.log('Unloading md-processor-toml plugin');
+    if (this.metadataPatch) {
+      this.metadataPatch.uninstall();
+      this.metadataPatch = null;
+    }
     this.cache.clear();
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
@@ -135,5 +167,8 @@ export default class MdProcessorTomlPlugin extends Plugin {
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
     setEditorSettings(this.settings);
+    if (this.metadataPatch) {
+      this.metadataPatch.setDelimiter(this.settings.delimiter);
+    }
   }
 }

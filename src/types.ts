@@ -12,6 +12,7 @@ export interface PluginSettings {
   renderMode: 'table' | 'raw' | 'both';
   enabledInReadingView: boolean;
   enabledInLivePreview: boolean;
+  enableBasesIntegration: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -20,4 +21,5 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   renderMode: 'table',
   enabledInReadingView: true,
   enabledInLivePreview: true,
+  enableBasesIntegration: true,
 };
