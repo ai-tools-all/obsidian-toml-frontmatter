@@ -1,3 +1,14 @@
+## [0.3.1] - 2026-03-03
+
+### 🐛 Bug Fixes
+
+- *(release)* Use dist/main.js path and guard for cliff.toml
+- *(ci)* Add contents:write permission; release creation handled by Actions
+- Handle Templater syntax in TOML frontmatter values
+
+### ⚙️ Miscellaneous Tasks
+
+- Add git-cliff config
 ## [0.3.0] - 2026-03-03
 
 ### 🚀 Features
@@ -34,3 +45,4 @@
 - *(release)* Bump version to 0.2.0 and generate changelog
 - Init beads cli
 - Add beads task tracker and release script
+- *(release)* Bump version to 0.3.0 and generate changelog
