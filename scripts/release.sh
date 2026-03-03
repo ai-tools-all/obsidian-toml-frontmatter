@@ -17,7 +17,7 @@ VERSION="$1"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "Version must be semver: X.Y.Z (got: $VERSION)"
 
 # ── Check required tools ───────────────────────────────────────────────────────
-for tool in git jq gh git-cliff npm; do
+for tool in git jq git-cliff npm; do
   command -v "$tool" &>/dev/null || die "'$tool' is not installed or not in PATH"
 done
 
@@ -65,10 +65,5 @@ info "Tagging $VERSION and pushing..."
 git tag "$VERSION"
 git push origin main --tags
 
-# ── 7. Create GitHub release ──────────────────────────────────────────────────
-info "Creating GitHub release..."
-gh release create "$VERSION" dist/main.js manifest.json styles.css \
-  --title "v${VERSION}" \
-  --notes-file CHANGELOG.md
-
-info "✅ Released v${VERSION}"
+# ── 7. GitHub release (auto-triggered by Actions on tag push) ─────────────────
+info "✅ Tag $VERSION pushed — GitHub Actions will build & publish the release."
