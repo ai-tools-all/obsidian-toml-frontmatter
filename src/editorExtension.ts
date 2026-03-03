@@ -45,16 +45,24 @@ class TomlWidget extends WidgetType {
             } catch (err) {
               new Notice(`Failed to update: ${err instanceof Error ? err.message : String(err)}`);
             }
+          }).catch((err: unknown) => {
+            new Notice(`Failed to read file: ${err instanceof Error ? err.message : String(err)}`);
           });
         };
       }
     }
 
-    container.addEventListener('mousedown', () => { interacting = true; });
+    let interactTimeout: ReturnType<typeof setTimeout> | null = null;
+    container.addEventListener('mousedown', () => {
+      interacting = true;
+      if (interactTimeout) clearTimeout(interactTimeout);
+      interactTimeout = setTimeout(() => { interacting = false; }, 5000);
+    });
     container.addEventListener('focusout', (e: FocusEvent) => {
       const related = e.relatedTarget;
       if (!related || !(related instanceof Node) || !container.contains(related)) {
         interacting = false;
+        if (interactTimeout) { clearTimeout(interactTimeout); interactTimeout = null; }
       }
     });
 

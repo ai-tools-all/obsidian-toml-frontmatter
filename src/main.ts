@@ -156,6 +156,8 @@ export default class MdProcessorTomlPlugin extends Plugin {
         } catch (err) {
           new Notice(`Failed to update property: ${err instanceof Error ? err.message : String(err)}`);
         }
+      }).catch((err: unknown) => {
+        new Notice(`Failed to read file: ${err instanceof Error ? err.message : String(err)}`);
       });
     };
   }
