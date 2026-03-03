@@ -1,14 +1,18 @@
 import { StateField, Transaction, RangeSet } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
-import { editorLivePreviewField } from 'obsidian';
+import { App, Notice, editorLivePreviewField } from 'obsidian';
 import { parseTomlFrontmatter } from './tomlFrontmatter';
+import { applyTomlChange } from './tomlWriter';
 import { buildPropertiesDOM } from './ui';
-import { PluginSettings } from './types';
+import { PluginSettings, OnPropertyChange, ChangeAction, TomlValue } from './types';
 
 let pluginSettings: PluginSettings;
+let pluginApp: App | null = null;
+let interacting = false;
 
-export function setEditorSettings(settings: PluginSettings): void {
+export function setEditorSettings(settings: PluginSettings, app?: App): void {
   pluginSettings = settings;
+  if (app) pluginApp = app;
 }
 
 class TomlWidget extends WidgetType {
@@ -23,7 +27,38 @@ class TomlWidget extends WidgetType {
   toDOM(): HTMLElement {
     const container = createDiv();
     const parsed = parseTomlFrontmatter(this.raw, this.delimiter);
-    buildPropertiesDOM(container, parsed, pluginSettings);
+
+    let onUpdate: OnPropertyChange | undefined;
+    if (pluginApp) {
+      const app = pluginApp;
+      const file = app.workspace.getActiveFile();
+      if (file) {
+        onUpdate = (keyPath: string[], value: TomlValue | undefined, action: 'update' | 'delete' | 'add'): void => {
+          app.vault.read(file).then((content: string) => {
+            try {
+              const change: ChangeAction =
+                action === 'delete'
+                  ? { type: 'delete', keyPath }
+                  : { type: action, keyPath, value: value as TomlValue };
+              const updated = applyTomlChange(content, change, this.delimiter);
+              app.vault.modify(file, updated);
+            } catch (err) {
+              new Notice(`Failed to update: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          });
+        };
+      }
+    }
+
+    container.addEventListener('mousedown', () => { interacting = true; });
+    container.addEventListener('focusout', (e: FocusEvent) => {
+      const related = e.relatedTarget;
+      if (!related || !(related instanceof Node) || !container.contains(related)) {
+        interacting = false;
+      }
+    });
+
+    buildPropertiesDOM(container, parsed, pluginSettings, onUpdate);
     return container;
   }
 
@@ -31,7 +66,10 @@ class TomlWidget extends WidgetType {
     return 100;
   }
 
-  ignoreEvent(): boolean {
+  ignoreEvent(event: Event): boolean {
+    if (event.type === 'mousedown' || event.type === 'input' || event.type === 'change') {
+      return false;
+    }
     return true;
   }
 }
@@ -71,7 +109,7 @@ function buildDecorations(state: any): DecorationSet {
   const from = doc.line(openLine + 1).from;
   const to = doc.line(closeLine + 1).to;
 
-  if (cursor.from >= from && cursor.to <= to) {
+  if (cursor.from >= from && cursor.to <= to && !interacting) {
     return Decoration.none;
   }
 

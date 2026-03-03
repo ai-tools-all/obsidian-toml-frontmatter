@@ -1,8 +1,9 @@
 import { Plugin, Notice, TFile, MarkdownView } from 'obsidian';
 import { parseTomlFrontmatter } from './tomlFrontmatter';
+import { applyTomlChange } from './tomlWriter';
 import { TomlCard } from './ui';
 import { PluginSettingsTab } from './settings';
-import { DEFAULT_SETTINGS, ParsedToml, PluginSettings } from './types';
+import { DEFAULT_SETTINGS, ParsedToml, PluginSettings, OnPropertyChange, ChangeAction, TomlValue } from './types';
 import { tomlEditorField, setEditorSettings } from './editorExtension';
 import { MetadataPatch } from './metadataPatch';
 
@@ -19,7 +20,7 @@ export default class MdProcessorTomlPlugin extends Plugin {
 
     this.addSettingTab(new PluginSettingsTab(this.app, this));
 
-    setEditorSettings(this.settings);
+    setEditorSettings(this.settings, this.app);
     this.registerEditorExtension([tomlEditorField]);
 
     this.registerMarkdownPostProcessor(async (el, ctx) => {
@@ -50,7 +51,7 @@ export default class MdProcessorTomlPlugin extends Plugin {
       if (sectionInfo.lineStart > parsed.endLine) return;
 
       if (sectionInfo.lineStart === 0) {
-        const card = new TomlCard(el, parsed, this.settings);
+        const card = new TomlCard(el, parsed, this.settings, this.createOnUpdate(sourcePath));
         card.onload();
       } else {
         el.empty();
@@ -139,6 +140,26 @@ export default class MdProcessorTomlPlugin extends Plugin {
     }
   }
 
+  private createOnUpdate(filePath: string): OnPropertyChange {
+    return (keyPath: string[], value: TomlValue | undefined, action: 'update' | 'delete' | 'add'): void => {
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (!(file instanceof TFile)) return;
+
+      this.app.vault.read(file).then((content: string) => {
+        try {
+          const change: ChangeAction =
+            action === 'delete'
+              ? { type: 'delete', keyPath }
+              : { type: action, keyPath, value: value as TomlValue };
+          const updated = applyTomlChange(content, change, this.settings.delimiter);
+          this.app.vault.modify(file, updated);
+        } catch (err) {
+          new Notice(`Failed to update property: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      });
+    };
+  }
+
   private async updateCache(filePath: string): Promise<void> {
     try {
       const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -166,7 +187,7 @@ export default class MdProcessorTomlPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
-    setEditorSettings(this.settings);
+    setEditorSettings(this.settings, this.app);
     if (this.metadataPatch) {
       this.metadataPatch.setDelimiter(this.settings.delimiter);
     }
