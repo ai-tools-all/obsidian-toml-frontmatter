@@ -229,4 +229,60 @@ describe('parseTomlFrontmatter', () => {
     const result = parseTomlFrontmatter(content);
     expect(result.endLine).toBe(-1);
   });
+
+  // === Templater syntax ===
+
+  it('parses Templater syntax in single-quoted values (no inner quote conflict)', () => {
+    const content = "+++\ndate = '<% tp.file.title %>'\nweek = '<% tp.date.now(\"WW\") %>'\n+++\n";
+    const result = parseTomlFrontmatter(content);
+    expect(result.error).toBeNull();
+    expect(result.data?.date).toBe('<% tp.file.title %>');
+    expect(result.data?.week).toBe('<% tp.date.now("WW") %>');
+  });
+
+  it('parses Templater syntax with nested double quotes (invalid TOML, rescued)', () => {
+    const content = '+++\ndate = "<% tp.date.now("YYYY-MM-DD") %>"\n+++\n';
+    const result = parseTomlFrontmatter(content);
+    expect(result.error).toBeNull();
+    expect(result.data?.date).toBe('<% tp.date.now("YYYY-MM-DD") %>');
+  });
+
+  it('parses Templater syntax with escaped inner quotes', () => {
+    const content = '+++\ndate = "<% tp.date.now(\\"YYYY-MM-DD\\") %>"\n+++\n';
+    const result = parseTomlFrontmatter(content);
+    expect(result.error).toBeNull();
+    expect(result.data?.date).toBe('<% tp.date.now("YYYY-MM-DD") %>');
+  });
+
+  it('parses multiple Templater blocks in one value', () => {
+    const content = '+++\nnote = "<% tp.date.now() %> - <% tp.file.title %>"\n+++\n';
+    const result = parseTomlFrontmatter(content);
+    expect(result.error).toBeNull();
+    expect(result.data?.note).toBe('<% tp.date.now() %> - <% tp.file.title %>');
+  });
+
+  it('parses Templater blocks across multiple keys', () => {
+    const content = '+++\ndate = "<% tp.date.now("YYYY-MM-DD") %>"\ntitle = "<% tp.file.title %>"\ntags = ["journal"]\n+++\n';
+    const result = parseTomlFrontmatter(content);
+    expect(result.error).toBeNull();
+    expect(result.data?.date).toBe('<% tp.date.now("YYYY-MM-DD") %>');
+    expect(result.data?.title).toBe('<% tp.file.title %>');
+    expect(result.data?.tags).toEqual(['journal']);
+  });
+
+  it('parses Templater block inside an array value', () => {
+    const content = '+++\nitems = ["<% tp.date.now() %>", "static"]\n+++\n';
+    const result = parseTomlFrontmatter(content);
+    expect(result.error).toBeNull();
+    expect(result.data?.items).toEqual(['<% tp.date.now() %>', 'static']);
+  });
+
+  it('preserves non-Templater values alongside Templater values', () => {
+    const content = '+++\ntitle = "My Note"\ndate = "<% tp.date.now("YYYY-MM-DD") %>"\ncount = 42\n+++\n';
+    const result = parseTomlFrontmatter(content);
+    expect(result.error).toBeNull();
+    expect(result.data?.title).toBe('My Note');
+    expect(result.data?.date).toBe('<% tp.date.now("YYYY-MM-DD") %>');
+    expect(result.data?.count).toBe(42);
+  });
 });

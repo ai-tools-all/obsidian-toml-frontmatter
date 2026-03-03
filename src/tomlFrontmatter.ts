@@ -1,5 +1,39 @@
 import * as TOML from '@iarna/toml';
-import { ParsedToml, TomlTable } from './types';
+import { ParsedToml, TomlTable, TomlValue } from './types';
+
+const TEMPLATER_RE = /<%.*?%>/g;
+
+function escapeTemplaterBlocks(raw: string): { cleaned: string; placeholders: Map<string, string> } {
+  const placeholders = new Map<string, string>();
+  let i = 0;
+  const cleaned = raw.replace(TEMPLATER_RE, (match) => {
+    const key = `__TMPL${i++}__`;
+    placeholders.set(key, match);
+    return key;
+  });
+  return { cleaned, placeholders };
+}
+
+function restoreTemplaterValues(value: TomlValue, placeholders: Map<string, string>): TomlValue {
+  if (typeof value === 'string') {
+    let s = value;
+    for (const [key, original] of placeholders) {
+      s = s.replace(key, original);
+    }
+    return s;
+  }
+  if (Array.isArray(value)) {
+    return value.map(v => restoreTemplaterValues(v, placeholders)) as TomlValue;
+  }
+  if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+    const obj: Record<string, TomlValue> = {};
+    for (const [k, v] of Object.entries(value as TomlTable)) {
+      obj[k] = restoreTemplaterValues(v, placeholders);
+    }
+    return obj as TomlTable;
+  }
+  return value;
+}
 
 export function parseTomlFrontmatter(
   content: string,
@@ -40,8 +74,19 @@ export function parseTomlFrontmatter(
   try {
     const parsed = TOML.parse(raw) as unknown as TomlTable;
     return { data: parsed, raw, error: null, timestamp, endLine: closingIndex };
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : 'Unknown TOML parse error';
-    return { data: null, raw, error: errorMsg, timestamp, endLine: closingIndex };
+  } catch (firstErr) {
+    const { cleaned, placeholders } = escapeTemplaterBlocks(raw);
+    if (placeholders.size === 0) {
+      const errorMsg = firstErr instanceof Error ? firstErr.message : 'Unknown TOML parse error';
+      return { data: null, raw, error: errorMsg, timestamp, endLine: closingIndex };
+    }
+    try {
+      let parsed = TOML.parse(cleaned) as unknown as TomlTable;
+      parsed = restoreTemplaterValues(parsed, placeholders) as TomlTable;
+      return { data: parsed, raw, error: null, timestamp, endLine: closingIndex };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Unknown TOML parse error';
+      return { data: null, raw, error: errorMsg, timestamp, endLine: closingIndex };
+    }
   }
 }
