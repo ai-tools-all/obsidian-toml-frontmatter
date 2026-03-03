@@ -74,10 +74,7 @@ class TomlWidget extends WidgetType {
     return 100;
   }
 
-  ignoreEvent(event: Event): boolean {
-    if (event.type === 'mousedown' || event.type === 'input' || event.type === 'change') {
-      return false;
-    }
+  ignoreEvent(): boolean {
     return true;
   }
 }
