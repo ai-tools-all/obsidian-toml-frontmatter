@@ -1,7 +1,7 @@
 {
   "id": "md-processor-toml",
   "name": "TOML Frontmatter Processor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "1.0.0",
   "description": "Renders TOML frontmatter (+++...+++) as a native-style Properties panel in both Reading and Live Preview modes",
   "author": "Abhishek Tripathi",
