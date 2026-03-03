@@ -1,5 +1,5 @@
 import * as TOML from '@iarna/toml';
-import { ParsedToml } from './types';
+import { ParsedToml, TomlTable } from './types';
 
 export function parseTomlFrontmatter(
   content: string,
@@ -38,7 +38,7 @@ export function parseTomlFrontmatter(
   }
 
   try {
-    const parsed = TOML.parse(raw) as Record<string, any>;
+    const parsed = TOML.parse(raw) as unknown as TomlTable;
     return { data: parsed, raw, error: null, timestamp, endLine: closingIndex };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown TOML parse error';

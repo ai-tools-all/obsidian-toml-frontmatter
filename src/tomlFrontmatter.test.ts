@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseTomlFrontmatter } from './tomlFrontmatter';
+import { TomlTable } from './types';
 
 describe('parseTomlFrontmatter', () => {
 
@@ -30,7 +31,10 @@ describe('parseTomlFrontmatter', () => {
   it('parses deeply nested tables', () => {
     const content = '+++\n[a]\n[a.b]\n[a.b.c]\nkey = "deep"\n+++\n';
     const result = parseTomlFrontmatter(content);
-    expect(result.data?.a?.b?.c?.key).toBe('deep');
+    const a = result.data?.a as TomlTable | undefined;
+    const b = a?.b as TomlTable | undefined;
+    const c = b?.c as TomlTable | undefined;
+    expect(c?.key).toBe('deep');
   });
 
   it('preserves raw TOML string', () => {

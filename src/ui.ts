@@ -1,5 +1,5 @@
 import { MarkdownRenderChild } from 'obsidian';
-import { ParsedToml, PluginSettings } from './types';
+import { ParsedToml, PluginSettings, TomlValue, TomlTable, isTomlTable } from './types';
 
 const ICONS: Record<string, string> = {
   text: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18H3"/></svg>`,
@@ -10,29 +10,29 @@ const ICONS: Record<string, string> = {
   object: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>`,
 };
 
-function detectType(value: any): string {
-  if (value === null || value === undefined) return 'text';
+type TomlDisplayType = 'text' | 'number' | 'date' | 'tags' | 'boolean' | 'object';
+
+function detectType(value: TomlValue): TomlDisplayType {
   if (value instanceof Date) return 'date';
   if (typeof value === 'boolean') return 'boolean';
   if (typeof value === 'number') return 'number';
   if (Array.isArray(value)) return 'tags';
-  if (typeof value === 'object') return 'object';
+  if (isTomlTable(value)) return 'object';
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return 'date';
   return 'text';
 }
 
-function formatValue(value: any): string {
-  if (value === null || value === undefined) return '';
+function formatValue(value: TomlValue): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (typeof value === 'number') return String(value);
   if (value instanceof Date) return value.toISOString().split('T')[0];
-  if (Array.isArray(value)) return value.map(v => formatValue(v)).join(', ');
-  if (typeof value === 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return value.map(v => formatValue(v as TomlValue)).join(', ');
+  if (isTomlTable(value)) return JSON.stringify(value);
   return String(value);
 }
 
-function renderRow(container: HTMLElement, key: string, value: any): void {
+function renderRow(container: HTMLElement, key: string, value: TomlValue): void {
   const type = detectType(value);
   const row = container.createDiv({ cls: 'toml-properties-row' });
 
@@ -59,12 +59,12 @@ function renderRow(container: HTMLElement, key: string, value: any): void {
   }
 }
 
-function renderProperties(container: HTMLElement, data: Record<string, any>): void {
-  const flat: [string, any][] = [];
-  const nested: [string, Record<string, any>][] = [];
+function renderProperties(container: HTMLElement, data: TomlTable): void {
+  const flat: [string, TomlValue][] = [];
+  const nested: [string, TomlTable][] = [];
 
   for (const [key, value] of Object.entries(data)) {
-    if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+    if (isTomlTable(value)) {
       nested.push([key, value]);
     } else {
       flat.push([key, value]);
@@ -83,8 +83,8 @@ function renderProperties(container: HTMLElement, data: Record<string, any>): vo
     sectionHeader.createSpan({ cls: 'toml-properties-section-name', text: key });
 
     for (const [subKey, subValue] of Object.entries(obj)) {
-      if (subValue !== null && typeof subValue === 'object' && !Array.isArray(subValue) && !(subValue instanceof Date)) {
-        for (const [deepKey, deepValue] of Object.entries(subValue as Record<string, any>)) {
+      if (isTomlTable(subValue)) {
+        for (const [deepKey, deepValue] of Object.entries(subValue)) {
           renderRow(sectionEl, deepKey, deepValue);
         }
       } else {
